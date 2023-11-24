@@ -830,11 +830,9 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
     }
 
     private List<CodegenProperty> varsWithoutDiscriminator(List<CodegenProperty> vars, CodegenDiscriminator discriminator) {
-        // TODO
-        return vars;
-        // return vars.stream()
-        //     .filter(property -> property.getName() != discriminator.getPropertyName())
-        //     .toList();
+        return vars.stream()
+            .filter(property -> property.getName() != discriminator.getPropertyName())
+            .toList();
     }
 
     @Override

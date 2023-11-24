@@ -19,6 +19,41 @@
                 ) = {{classname}}{{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}};
             {{/mappedModels}}
             {{/discriminator}}
+
+            {{! 
+            Helper methods to make it easier to construct model oneOf classes.
+            Instead of needing to create a new model object, and wrap that with 
+            const factory constructor above, these helper methods take the 
+            properties on the model classes directly.
+            }}
+            {{#vendorExtensions.x-oneOf-helper-properties}}
+                {{#oneOfVars}}
+                    {{#description}}
+                        /// [{{name}}] - {{{.}}}
+                    {{/description}}
+                {{/oneOfVars}}
+                factory {{classname}}.from{{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}}({
+                    {{#oneOfVars}}
+                        {{>serialization/freezed/variable_type}} {{name}},
+                    {{/oneOfVars}}
+                }) {
+                    return {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}(
+                        {{modelName}}(
+                            {{! 
+                            If discriminatorEnumValue has been automatically inferred,
+                            the user doesn't need to provide it in the arguments and
+                            it will be added automatically here.
+                            }}
+                            {{#discriminatorEnumValue}}
+                                {{discriminatorEnumKey}}: {{discriminatorEnumValue}},
+                            {{/discriminatorEnumValue}}
+                            {{#oneOfVars}}
+                            {{name}}: {{name}},
+                            {{/oneOfVars}}
+                        )
+                    );
+                }
+            {{/vendorExtensions.x-oneOf-helper-properties}}
     {{/hasDiscriminatorWithNonEmptyMapping}}
 {{/vendorExtensions.x-is-pure}}
 {{^vendorExtensions.x-is-pure}}
