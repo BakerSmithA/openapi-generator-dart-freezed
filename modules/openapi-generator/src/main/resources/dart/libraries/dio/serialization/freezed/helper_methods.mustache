@@ -1,0 +1,27 @@
+{{^vendorExtensions.x-is-pure}}
+    {{#hasDiscriminatorWithNonEmptyMapping}}
+        extension {{classname}}Helper on {{classname}} {
+            {{#vendorExtensions.x-oneOf-helper-properties}}
+                {{#oneOfProperties}}
+                    {{#description}}
+                        /// [{{name}}] {{{.}}}
+                    {{/description}}
+                {{/oneOfProperties}}
+                {{! The mapping name here matches that from class_factory }}
+                static {{classname}} {{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}({
+                    {{#oneOfProperties}}
+                        {{>serialization/freezed/variable_type}} {{name}},
+                    {{/oneOfProperties}}
+                }) {
+                    return {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}(
+                        {{modelName}}(
+                            {{#oneOfProperties}}
+                            {{name}}: {{name}},
+                            {{/oneOfProperties}}
+                        )
+                    );
+                }
+            {{/vendorExtensions.x-oneOf-helper-properties}}
+        }
+    {{/hasDiscriminatorWithNonEmptyMapping}}
+{{/vendorExtensions.x-is-pure}}
