@@ -365,7 +365,6 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
 
             }
         });
-
     }
 
     private void configureDateLibrary(String srcFolder) {
@@ -674,10 +673,37 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
                 CodegenModel cm = mo.getModel();
                 cm.imports = rewriteImports(cm.imports, true);
                 cm.vendorExtensions.put("x-has-vars", !cm.vars.isEmpty());
+
+                if (SERIALIZATION_LIBRARY_FREEZED.equals(library)) {
+                    CodegenDiscriminator discriminator = cm.getDiscriminator();
+                    if (discriminator != null) {
+                        Set<MappedModel> mappedModels = discriminator.getMappedModels();
+                        // Check if the model is a part of oneOf polymorphism
+                        if (mappedModels != null && !mappedModels.isEmpty()) {
+                            processOneOfModel(cm, mappedModels, objs);
+                        }
+                    }
+                }
             }
         }
 
         return objs;
+    }
+
+    private void processOneOfModel(CodegenModel model, Set<MappedModel> mappedModels, Map<String, ModelsMap> allModels) {
+        // Create a new list for storing filtered properties for the helper method
+        List<Map<String, Object>> props = new ArrayList<>();
+    
+        for (MappedModel oneOfModel : mappedModels) {
+            Map<String, Object> f = new HashMap<>();
+            f.put("mappingName", oneOfModel.getMappingName());
+            f.put("modelName", oneOfModel.getModel().getName());
+            f.put("oneOfProperties", oneOfModel.getModel().getVars());
+            props.add(f);
+        }
+    
+        // Add the filtered properties to a custom vendor extension
+        model.vendorExtensions.put("x-oneOf-helper-properties", props);
     }
 
     @Override
