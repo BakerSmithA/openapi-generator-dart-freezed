@@ -2,22 +2,33 @@
     {{#hasDiscriminatorWithNonEmptyMapping}}
         extension {{classname}}Helper on {{classname}} {
             {{#vendorExtensions.x-oneOf-helper-properties}}
-                {{#oneOfProperties}}
+                {{#oneOfVars}}
                     {{#description}}
-                        /// [{{name}}] {{{.}}}
+                        /// [{{name}}] - {{{.}}}
                     {{/description}}
-                {{/oneOfProperties}}
+                {{/oneOfVars}}
                 {{! The mapping name here matches that from class_factory }}
                 static {{classname}} {{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}({
-                    {{#oneOfProperties}}
+                    {{#oneOfVars}}
+                        {{#description}}
+                            /// {{{.}}}
+                        {{/description}}
                         {{>serialization/freezed/variable_type}} {{name}},
-                    {{/oneOfProperties}}
+                    {{/oneOfVars}}
                 }) {
                     return {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}(
                         {{modelName}}(
-                            {{#oneOfProperties}}
+                            {{! 
+                            If discriminatorEnumValue has been automatically inferred,
+                            the user doesn't need to provide it in the arguments and
+                            it will be added automatically here.
+                            }}
+                            {{#discriminatorEnumValue}}
+                                {{discriminatorEnumKey}}: {{discriminatorEnumValue}},
+                            {{/discriminatorEnumValue}}
+                            {{#oneOfVars}}
                             {{name}}: {{name}},
-                            {{/oneOfProperties}}
+                            {{/oneOfVars}}
                         )
                     );
                 }

@@ -674,13 +674,16 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
                 cm.imports = rewriteImports(cm.imports, true);
                 cm.vendorExtensions.put("x-has-vars", !cm.vars.isEmpty());
 
+                // If using the freezed library for serialisation, we add some 
+                // additonal helper functions to make it easier to construct
+                // the model types. This sets up the data needed.
                 if (SERIALIZATION_LIBRARY_FREEZED.equals(library)) {
                     CodegenDiscriminator discriminator = cm.getDiscriminator();
                     if (discriminator != null) {
                         Set<MappedModel> mappedModels = discriminator.getMappedModels();
                         // Check if the model is a part of oneOf polymorphism
                         if (mappedModels != null && !mappedModels.isEmpty()) {
-                            processOneOfModel(cm, mappedModels, objs);
+                            addOneOfHelperPropertiesVendorExtension(cm, discriminator, mappedModels, objs);
                         }
                     }
                 }
@@ -690,20 +693,148 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
         return objs;
     }
 
-    private void processOneOfModel(CodegenModel model, Set<MappedModel> mappedModels, Map<String, ModelsMap> allModels) {
+    /**
+     * Given an example spec:
+     * 
+     * EventTrigger:
+     *   type: object
+     *   description:  
+     *     The trigger condition for an event, based on either time or count.
+     *   discriminator:
+     *     propertyName: type
+     *     mapping:
+     *       timeTrigger: '#/components/schemas/TimeTrigger'
+     *       countTrigger: '#/components/schemas/CountTrigger'
+     *   oneOf:
+     *     - $ref: '#/components/schemas/TimeTrigger'
+     *     - $ref: '#/components/schemas/CountTrigger'
+     *
+     * TimeTrigger:
+     *   type: object
+     *   properties:
+     *     type:
+     *       $ref: '#/components/schemas/TimeTriggerType'
+     *     prop1:
+     *       type: string
+     *     prop2: 
+     *       type: string
+     *
+     * TimeTriggerType:
+     *   type: string
+     *   enum:
+     *     - timeTrigger
+     *
+     * CountTrigger:
+     *   type: object
+     *   properties:
+     *     type:
+     *       $ref: '#/components/schemas/CountTriggerType'
+     *     prop3:
+     *       type: string
+     *
+     * CountTriggerType:
+     *   type: string
+     *   enum:
+     *     - countTrigger
+     * 
+     * Adds helper properties to EventTrigger to help when generating helper 
+     * methods for constructing TimeTrigger or CountTrigger. For example, adds
+     * `x-oneOf-helper-properties` containing:
+     * 
+     * [
+     *   {
+     *     mappingName: "timeTrigger",
+     *     modelName: "TimeTrigger",
+     *     oneOfVars: prop1, prop2,
+     *     discriminatorEnumKey: type
+     *     discriminatorEnumValue: TimeTriggerType.timeTrigger
+     *   },
+     *   {
+     *     mappingName: "countTrigger",
+     *     modelName: "CountTrigger",
+     *     oneOfVars: prop3
+     *     discriminatorEnumKey: type
+     *     discriminatorEnumValue: CountTriggerType.countTrigger
+     *   },
+     * ]
+     */
+    private void addOneOfHelperPropertiesVendorExtension(
+        CodegenModel model, 
+        CodegenDiscriminator discriminator, 
+        Set<MappedModel> mappedModels, 
+        Map<String, ModelsMap> allModels
+    ) {
         // Create a new list for storing filtered properties for the helper method
         List<Map<String, Object>> props = new ArrayList<>();
     
-        for (MappedModel oneOfModel : mappedModels) {
-            Map<String, Object> f = new HashMap<>();
-            f.put("mappingName", oneOfModel.getMappingName());
-            f.put("modelName", oneOfModel.getModel().getName());
-            f.put("oneOfProperties", oneOfModel.getModel().getVars());
-            props.add(f);
+        for (MappedModel oneOfMappedModel : mappedModels) {
+            CodegenModel oneOfModel = oneOfMappedModel.getModel();
+            List<CodegenProperty> oneOfVars = oneOfModel.getVars();
+
+            // Returns e.g. `MyTypeEnum.type1`
+            String disEnumValue = uniqueDiscriminatorEnumValue(discriminator, oneOfVars);
+
+            Map<String, Object> templateVars = new HashMap<>();
+            templateVars.put("mappingName", oneOfMappedModel.getMappingName());
+            templateVars.put("modelName", oneOfModel.getName());
+
+            // If we can find the discriminator value, then the user does not 
+            // need to provide this enum when calling the helper method - it 
+            // can be automatically inferred.
+            templateVars.put("oneOfVars", disEnumValue != null
+                ? varsWithoutDiscriminator(oneOfVars, discriminator)
+                : oneOfVars
+            );
+
+            if (disEnumValue != null) {
+                // Name of discriminator property, e.g. "type"
+                templateVars.put("discriminatorEnumKey", discriminator.getPropertyName());
+                // Value of the discriminator, when it can be uniquely identified,
+                // for this type of oneOf.
+                templateVars.put("discriminatorEnumValue", disEnumValue);
+            }
+
+            props.add(templateVars);
         }
     
         // Add the filtered properties to a custom vendor extension
         model.vendorExtensions.put("x-oneOf-helper-properties", props);
+    }
+
+    /**
+     * If the discriminator has a single possible enum value, then returns 
+     * a string representing the enum in Dart code (e.g. MyEnumType.type1). 
+     * Otherwise, if the discriminator has multiple possible values, returns null.
+     */
+    private String uniqueDiscriminatorEnumValue(CodegenDiscriminator discriminator, List<CodegenProperty> vars) {
+        for (CodegenProperty var : vars) {
+            if (var.getName().equals(discriminator.getPropertyName()) && var.isEnum) {
+                try {
+                    List<Map<String, Object>> enumVars = (List<Map<String, Object>>)var.getAllowableValues().get("enumVars");
+                    // If there's more than 1 enum value, we can't infer which
+                    // oneOf type should be using.
+                    if (enumVars.size() != 1) {
+                        continue;
+                    }
+                    String enumType = var.getDatatypeWithEnum();
+                    String enumValue = (String)enumVars.get(0).get("name");
+                    return enumType + "." + enumValue;
+                    
+                } catch (Exception e) {
+                    continue;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private List<CodegenProperty> varsWithoutDiscriminator(List<CodegenProperty> vars, CodegenDiscriminator discriminator) {
+        // TODO
+        return vars;
+        // return vars.stream()
+        //     .filter(property -> property.getName() != discriminator.getPropertyName())
+        //     .toList();
     }
 
     @Override
