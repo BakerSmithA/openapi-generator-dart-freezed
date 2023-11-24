@@ -14,9 +14,9 @@
     {{#hasDiscriminatorWithNonEmptyMapping}}
             {{#discriminator}}
             {{#mappedModels}}
-                const factory {{classname}}.{{#lambda.camelcase}}{{#lambda.lowercase}}{{mappingName}}{{/lambda.lowercase}}{{/lambda.camelcase}}({
-                    required {{modelName}} {{#lambda.camelcase}}{{modelName}}{{/lambda.camelcase}},
-                }) = {{classname}}{{#lambda.titlecase}}{{#lambda.lowercase}}{{mappingName}}{{/lambda.lowercase}}{{/lambda.titlecase}};
+                const factory {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}(
+                    {{modelName}} {{#lambda.camelcase}}{{modelName}}{{/lambda.camelcase}},
+                ) = {{classname}}{{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}};
             {{/mappedModels}}
             {{/discriminator}}
     {{/hasDiscriminatorWithNonEmptyMapping}}
@@ -25,14 +25,14 @@
     {{^vendorExtensions.x-is-child}}
         {{^hasDiscriminatorWithNonEmptyMapping}}
                 {{#anyOf}}
-                        const factory {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}({
-                        required {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}} {{#lambda.camelcase}}{{{.}}}Value{{/lambda.camelcase}}
-                        }) = {{classname}}As{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}};
+                    const factory {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}({
+                        {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}} {{#lambda.camelcase}}{{{.}}}Value{{/lambda.camelcase}}
+                    ) = {{classname}}As{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}};
                 {{/anyOf}}
                 {{#oneOf}}
-                    const factory {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}({
-                        required {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}} {{#lambda.camelcase}}{{{.}}}Value{{/lambda.camelcase}}
-                    }) = {{classname}}As{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}};
+                    const factory {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}(
+                        {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}} {{#lambda.camelcase}}{{{.}}}Value{{/lambda.camelcase}}
+                    ) = {{classname}}As{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}};
                 {{/oneOf}}
         {{/hasDiscriminatorWithNonEmptyMapping}}
     {{/vendorExtensions.x-is-child}}

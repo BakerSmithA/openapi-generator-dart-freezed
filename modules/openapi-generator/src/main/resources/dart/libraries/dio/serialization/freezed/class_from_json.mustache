@@ -17,8 +17,8 @@ factory {{classname}}.fromJson(Map<String, dynamic> json) => _${{classname}}From
             switch(dis) {
                 {{#mappedModels}}
                     case '{{mappingName}}':
-                        return {{classname}}.{{#lambda.camelcase}}{{#lambda.lowercase}}{{mappingName}}{{/lambda.lowercase}}{{/lambda.camelcase}}(
-                            {{#lambda.camelcase}}{{modelName}}{{/lambda.camelcase}} : {{modelName}}.fromJson(json),
+                        return {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}(
+                            {{modelName}}.fromJson(json),
                         );
                 {{/mappedModels}}
             }
@@ -42,14 +42,14 @@ factory {{classname}}.fromJson(Map<String, dynamic> json) => _${{classname}}From
                         {{#anyOf}}
                             case {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}:
                                 deserializedModel =  {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}(
-                                {{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}Value : parsedModel as {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}},
+                                    parsedModel as {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}},
                                 );
                                 break;
                         {{/anyOf}}
                         {{#oneOf}}
                             case {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}:
                                 deserializedModel =  {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}(
-                                {{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}Value : parsedModel as {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}},
+                                    parsedModel as {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}},
                                 );
                                 break;
                         {{/oneOf}}
