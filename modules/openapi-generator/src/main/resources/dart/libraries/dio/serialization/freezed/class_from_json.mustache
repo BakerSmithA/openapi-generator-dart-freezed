@@ -13,7 +13,8 @@ factory {{classname}}.fromJson(Map<String, dynamic> json) => _${{classname}}From
 {{#hasDiscriminatorWithNonEmptyMapping}}
     factory {{classname}}.fromJson(Map<String, dynamic> json) {
         {{#discriminator}}
-            switch(json['{{propertyBaseName}}']){
+            final dis = json['{{propertyBaseName}}'];
+            switch(dis) {
                 {{#mappedModels}}
                     case '{{mappingName}}':
                         return {{classname}}.{{#lambda.camelcase}}{{#lambda.lowercase}}{{mappingName}}{{/lambda.lowercase}}{{/lambda.camelcase}}(
@@ -22,7 +23,7 @@ factory {{classname}}.fromJson(Map<String, dynamic> json) => _${{classname}}From
                 {{/mappedModels}}
             }
         {{/discriminator}}
-        return {{classname}}.unknown(json: json);
+        throw UnsupportedError("Couldn't deserialize oneOf for the discriminator value: ${dis}");
     }
 {{/hasDiscriminatorWithNonEmptyMapping}}
 {{/vendorExtensions.x-is-pure}}
@@ -35,46 +36,36 @@ factory {{classname}}.fromJson(Map<String, dynamic> json) => _${{classname}}From
                 final deserializedModels = <{{classname}}>[];
                 {{classname}}? deserializedModel;
                 for (final fromJsonMethod in fromJsonMethods) {
-                    try {
-                        final dynamic parsedModel= fromJsonMethod.call(json);
-                        // Note following line won't be executed if already the above parsing fails.
-                        switch (deserializedModel.runtimeType) {
-                            {{#anyOf}}
-                                case {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}:
-                                    deserializedModel =  {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}(
-                                    {{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}Value : parsedModel as {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}},
-                                    );
-                                    break;
-                            {{/anyOf}}
-                            {{#oneOf}}
-                                case {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}:
-                                    deserializedModel =  {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}(
-                                    {{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}Value : parsedModel as {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}},
-                                    );
-                                    break;
-                            {{/oneOf}}
-                            default:
-                                deserializedModel =  {{classname}}.unknown(json: json,);
-                        }
-                        deserializedModels.add(deserializedModel);
-                    } catch (e) {
-                        // We are suppressing the deserialization error when the json could not
-                        // be parsed into one of the model. Because we return [{{classname}}.unknown]
-                        // if the deserialization fails.
+                    final dynamic parsedModel= fromJsonMethod.call(json);
+                    // Note following line won't be executed if already the above parsing fails.
+                    switch (deserializedModel.runtimeType) {
+                        {{#anyOf}}
+                            case {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}:
+                                deserializedModel =  {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}(
+                                {{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}Value : parsedModel as {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}},
+                                );
+                                break;
+                        {{/anyOf}}
+                        {{#oneOf}}
+                            case {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}:
+                                deserializedModel =  {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}(
+                                {{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}Value : parsedModel as {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}},
+                                );
+                                break;
+                        {{/oneOf}}
+                        default:
+                            throw UnsupportedError("Couldn't deserialize JSON: ${json}");
                     }
+                    deserializedModels.add(deserializedModel);
                 }
-                // Return an unknown type when the incoming json parses into more than one models.
-                // Since we pass deserializedModels, clients can still use the deserialized model.
-                // EvenThough this is valid for AnyOf types, Dart doesn't have polymorphic types.
-                // So we still return this as an unknown type.
+                // Throw an errpr when the incoming json parses into more than one models.
                 if(deserializedModels.length > 1){
-                    deserializedModel =  {{classname}}.unknown(
-                        json: json,
-                        deserializedModels: deserializedModels,
-                        errorType: DeserializationErrorType.MoreThanOneTypeSatisfied,
-                    );
+                    throw UnsupportedError("More than more one satisfied when parsing JSON: ${json}. Models: ${deserializedModels}");
                 }
-                return deserializedModel ?? {{classname}}.unknown(json: json);
+                if (deserializedModel == null) {
+                    throw Exception("No models matched when parsing JSON: ${json}");
+                }
+                return deserializedModel;
             }
         {{/hasDiscriminatorWithNonEmptyMapping}}
     {{/vendorExtensions.x-is-child}}

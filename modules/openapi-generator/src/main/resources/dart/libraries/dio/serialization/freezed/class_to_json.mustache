@@ -5,8 +5,6 @@
           {{#mappedModels}}
               {{#lambda.camelcase}}{{#lambda.lowercase}}{{mappingName}}{{/lambda.lowercase}}{{/lambda.camelcase}}: ({{#lambda.camelcase}}{{modelName}}{{/lambda.camelcase}}) => {{#lambda.camelcase}}{{modelName}}{{/lambda.camelcase}}.toJson(),
           {{/mappedModels}}
-          {{! adds an unknown case to handle one Of}}
-          unknown: (message, json, errorType, possibleTypes, deserializedModels) => <String, dynamic>{},
         );
       }
     {{/discriminator}}
@@ -23,8 +21,6 @@
                     {{#oneOf}}
                         as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}: (as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}) => as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}.toJson(),
                     {{/oneOf}}
-                    {{! adds an unknown case to handle one Of}}
-                    unknown: (message, json, errorType, possibleTypes, deserializedModels) => <String, dynamic>{},
                 );
             }
         {{/hasDiscriminatorWithNonEmptyMapping}}

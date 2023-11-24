@@ -18,14 +18,6 @@
                     required {{modelName}} {{#lambda.camelcase}}{{modelName}}{{/lambda.camelcase}},
                 }) = {{classname}}{{#lambda.titlecase}}{{#lambda.lowercase}}{{mappingName}}{{/lambda.lowercase}}{{/lambda.titlecase}};
             {{/mappedModels}}
-            const factory {{classname}}.unknown({
-                @Default('Json does not satisfy any available types') String message,
-                required Map<String, dynamic> json,
-                @Default(DeserializationErrorType.UnKnownType)
-                DeserializationErrorType errorType,
-                @Default(<Type>[{{#anyOf}}{{{.}}},{{/anyOf}}{{#oneOf}}{{{.}}},{{/oneOf}}]) List<Type> possibleTypes,
-                @Default(<{{classname}}>[]) List<{{classname}}> deserializedModels,
-            }) = {{classname}}Unknown;
             {{/discriminator}}
     {{/hasDiscriminatorWithNonEmptyMapping}}
 {{/vendorExtensions.x-is-pure}}
@@ -42,14 +34,6 @@
                         required {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}} {{#lambda.camelcase}}{{{.}}}Value{{/lambda.camelcase}}
                     }) = {{classname}}As{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}};
                 {{/oneOf}}
-                const factory {{classname}}.unknown({
-                    @Default('Json does not satisfy any available types') String message,
-                    required Map<String, dynamic> json,
-                    @Default(DeserializationErrorType.UnKnownType)
-                    DeserializationErrorType errorType,
-                    @Default(<Type>[{{#anyOf}}{{{.}}},{{/anyOf}}{{#oneOf}}{{{.}}},{{/oneOf}}]) List<Type> possibleTypes,
-                    @Default(<{{classname}}>[]) List<{{classname}}> deserializedModels,
-                }) = {{classname}}Unknown;
         {{/hasDiscriminatorWithNonEmptyMapping}}
     {{/vendorExtensions.x-is-child}}
 {{/vendorExtensions.x-is-pure}}
