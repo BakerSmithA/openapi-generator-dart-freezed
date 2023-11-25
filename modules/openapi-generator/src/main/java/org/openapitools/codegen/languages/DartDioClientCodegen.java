@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.openapitools.codegen.utils.CamelizeOption.LOWERCASE_FIRST_LETTER;
@@ -667,34 +668,103 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
             syncRootTypesWithInnerVars(objs);
         }
 
-        // loop through models to update the imports
-        for (ModelsMap entry : objs.values()) {
-            for (ModelMap mo : entry.getModels()) {
-                CodegenModel cm = mo.getModel();
-                cm.imports = rewriteImports(cm.imports, true);
-                cm.vendorExtensions.put("x-has-vars", !cm.vars.isEmpty());
-
-                // If using the freezed library for serialisation, we add some 
-                // additonal helper functions to make it easier to construct
-                // the model types. This sets up the data needed.
-                if (SERIALIZATION_LIBRARY_FREEZED.equals(library)) {
-                    CodegenDiscriminator discriminator = cm.getDiscriminator();
-                    if (discriminator != null) {
-                        Set<MappedModel> mappedModels = discriminator.getMappedModels();
-                        // Check if the model is a part of oneOf polymorphism
-                        if (mappedModels != null && !mappedModels.isEmpty()) {
-                            addOneOfHelperPropertiesVendorExtension(cm, discriminator, mappedModels, objs);
-                        }
-                    }
-                }
-            }
+        if (SERIALIZATION_LIBRARY_FREEZED.equals(library)) {
+            // Vendor extensions for helping generated union types when working
+            // with freezed serialiser. The freezed package supports union types
+            // by defining variables for each oneOf model directly in the parent 
+            // class https://pub.dev/packages/freezed#legacy-union-types-and-sealed-classes
+            addIsFreezedUnionMemberVendorExtension(objs);
+            addOneOfHelperPropertiesVendorExtension(objs);
         }
+
+        // loop through models to update the imports
+        forEachModel(objs, model -> {
+            model.imports = rewriteImports(model.imports, true);
+            model.vendorExtensions.put("x-has-vars", !model.vars.isEmpty());
+        });
 
         return objs;
     }
 
     /**
-     * Given an example spec:
+     * For each model, adds a vendor extension x-is-freezed-union-member boolean 
+     * indicating whether the model is part of a union type using oneOf, and 
+     * the freezed serialiser is being used 
+     * 
+     * WARNING: whether the freezed serialiser is used should be checked 
+     * outside this function call.
+     *  
+     * In this case, when using the freezed serialiser, we generate these 
+     * models inline in the parent class, which makes it easier to serialise/
+     * deserialise objects, and gives better support from Dart/Freezed package
+     * for accessing member variables:
+     * https://pub.dev/packages/freezed#legacy-union-types-and-sealed-classes.
+     */
+    private void addIsFreezedUnionMemberVendorExtension(Map<String, ModelsMap> objs) {
+        Set<String> unionMemberNames = unionMemberModelsNames(objs);
+        System.out.println("ALL UNION MEMBERS: " + unionMemberNames);
+        forEachModel(objs, model -> {
+            System.out.println("MODEL: " + model.getName() + ", UNION MEM: " + isModelUnionMember(model, unionMemberNames));
+            model.vendorExtensions.put(
+                "x-is-freezed-union-member", 
+                isModelUnionMember(model, unionMemberNames)
+            );
+        });
+    }
+
+    /**
+     * @return set of all models which are part of a union type with oneOf.
+     */
+    private Set<String> unionMemberModelsNames(Map<String, ModelsMap> objs) {
+        Set<String> names = new HashSet<>();
+        forEachModel(objs, model -> {
+            CodegenDiscriminator discriminator = model.getDiscriminator();
+            if (discriminator != null) {
+                Set<MappedModel> mappedModels = discriminator.getMappedModels();
+                List<String> mappedModelNames = mappedModels.stream()
+                    .map(mappedModel -> mappedModel.getModelName())
+                    .toList();
+                names.addAll(mappedModelNames);
+            }
+        });
+        return names;
+    }
+
+    /**
+     * @return whether a model is part of a union type with oneOf.
+     */
+    private boolean isModelUnionMember(CodegenModel model, Set<String> unionModelNames) {
+        return unionModelNames.contains(model.getName());
+    }
+
+    /**
+     * For each model, adds a vendor extension x-is-union-member boolean indicating
+     * whether the model is part of a union type using oneOf.
+     *  
+     * In this case, when using the freezed serialiser, we generate these 
+     * models inline in the parent class, which makes it easier to serialise/
+     * deserialise objects, and gives better support from Dart/Freezed package
+     * for accessing member variables:
+     * https://pub.dev/packages/freezed#legacy-union-types-and-sealed-classes.
+     */
+    private void addOneOfHelperPropertiesVendorExtension(Map<String, ModelsMap> objs) {
+        // If using the freezed library for serialisation, we add some 
+        // additonal helper functions to make it easier to construct
+        // the model types. This sets up the data needed.
+        forEachModel(objs, model -> {
+            CodegenDiscriminator discriminator = model.getDiscriminator();
+            if (discriminator != null) {
+                Set<MappedModel> mappedModels = discriminator.getMappedModels();
+                // Check if the model is a part of oneOf polymorphism
+                if (mappedModels != null && !mappedModels.isEmpty()) {
+                    addOneOfHelperPropertiesVendorExtensionToModel(model, discriminator, mappedModels, objs);
+                }
+            }
+        });
+    }
+
+    /**
+     * Used when serialising with freezed. Given an example spec:
      * 
      * EventTrigger:
      *   type: object
@@ -758,11 +828,11 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
      *   },
      * ]
      */
-    private void addOneOfHelperPropertiesVendorExtension(
+    private void addOneOfHelperPropertiesVendorExtensionToModel(
         CodegenModel model, 
         CodegenDiscriminator discriminator, 
         Set<MappedModel> mappedModels, 
-        Map<String, ModelsMap> allModels
+        Map<String, ModelsMap> objs
     ) {
         // Create a new list for storing filtered properties for the helper method
         List<Map<String, Object>> props = new ArrayList<>();
@@ -830,6 +900,9 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
         return null;
     }
 
+    /**
+     * @return list of vars without discriminator property.
+     */
     private List<CodegenProperty> varsWithoutDiscriminator(List<CodegenProperty> vars, CodegenDiscriminator discriminator) {
         return vars.stream()
             .filter(property -> property.getName() != discriminator.getPropertyName())
@@ -989,6 +1062,15 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
             }
         }
         return resultImports;
+    }
+
+    private void forEachModel(Map<String, ModelsMap> objs, Consumer<CodegenModel> onModel) {
+        for (ModelsMap modelsEntries : objs.values()) {
+            for (ModelMap modelsMap : modelsEntries.getModels()) {
+                CodegenModel model = modelsMap.getModel();
+                onModel.accept(model);
+            }
+        }
     }
 
     static class BuiltValueSerializer {
