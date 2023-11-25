@@ -24,7 +24,7 @@
                         {{/description}}
                         @JsonKey(name: r'{{baseName}}') {{>serialization/freezed/variable_type}} {{name}},
                     {{/allOneOfVars}}
-                }) = {{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}};
+                }) = {{modelName}};
             {{/vendorExtensions.x-oneOf-helper-properties}}
 
             {{! 
