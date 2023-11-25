@@ -1,42 +1,30 @@
 {{#vendorExtensions.x-is-pure}}
+{{! 
+Can use _<classname>FromJson provided by freezed package, because when a 
+discriminator is present, 
+https://pub.dev/packages/freezed#fromjson---classes-with-multiple-constructors
+}}
 factory {{classname}}.fromJson(Map<String, dynamic> json) => _${{classname}}FromJson(json);
-{{/vendorExtensions.x-is-pure}}
-{{^vendorExtensions.x-is-pure}}
-    {{#vendorExtensions.x-is-child}}
-        {{^hasDiscriminatorWithNonEmptyMapping}}
-            factory {{classname}}.fromJson(Map<String, dynamic> json) => _${{classname}}FromJson(json);
-        {{/hasDiscriminatorWithNonEmptyMapping}}
-    {{/vendorExtensions.x-is-child}}
-{{/vendorExtensions.x-is-pure}}
-
-{{^vendorExtensions.x-is-pure}}
-{{#hasDiscriminatorWithNonEmptyMapping}}
-    factory {{classname}}.fromJson(Map<String, dynamic> json) {
-        {{#discriminator}}
-            final dis = json['{{propertyBaseName}}'];
-            switch(dis) {
-                {{#mappedModels}}
-                    case '{{mappingName}}':
-                        return {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}(
-                            {{modelName}}.fromJson(json),
-                        );
-                {{/mappedModels}}
-            }
-        {{/discriminator}}
-        throw UnsupportedError("Couldn't deserialize oneOf for the discriminator value: ${dis}");
-    }
-{{/hasDiscriminatorWithNonEmptyMapping}}
 {{/vendorExtensions.x-is-pure}}
 
 {{^vendorExtensions.x-is-pure}}
     {{^vendorExtensions.x-is-child}}
+        {{! 
+        If no mapping is provided in the API spec, we need to override 
+        the default freezed behaviour, which will compare a "runtimeType"
+        discriminator it expects on the JSON:
+        https://pub.dev/packages/freezed#fromjson---classes-with-multiple-constructors
+
+        Instead, we deserialise the JSON, and see whether it matches and of 
+        our model classes.
+        }}
         {{^hasDiscriminatorWithNonEmptyMapping}}
             factory {{classname}}.fromJson(Map<String, dynamic> json) {
                 final fromJsonMethods = <FromJsonMethodType<dynamic>>[{{#anyOf}}{{#lambda.titlecase}}{{#PrimitiveFromJson}}{{{.}}}{{/PrimitiveFromJson}}{{/lambda.titlecase}}.fromJson,{{/anyOf}}{{#oneOf}}{{#lambda.titlecase}}{{#PrimitiveFromJson}}{{{.}}}{{/PrimitiveFromJson}}{{/lambda.titlecase}}.fromJson,{{/oneOf}}];
                 final deserializedModels = <{{classname}}>[];
                 {{classname}}? deserializedModel;
                 for (final fromJsonMethod in fromJsonMethods) {
-                    final dynamic parsedModel= fromJsonMethod.call(json);
+                    final dynamic parsedModel = fromJsonMethod.call(json);
                     // Note following line won't be executed if already the above parsing fails.
                     switch (deserializedModel.runtimeType) {
                         {{#anyOf}}

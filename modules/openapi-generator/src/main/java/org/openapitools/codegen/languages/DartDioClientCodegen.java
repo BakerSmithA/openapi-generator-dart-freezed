@@ -746,14 +746,14 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
      *     mappingName: "timeTrigger",
      *     modelName: "TimeTrigger",
      *     oneOfVars: prop1, prop2,
-     *     discriminatorEnumKey: type
+     *     discriminatorKey: type
      *     discriminatorEnumValue: TimeTriggerType.timeTrigger
      *   },
      *   {
      *     mappingName: "countTrigger",
      *     modelName: "CountTrigger",
      *     oneOfVars: prop3
-     *     discriminatorEnumKey: type
+     *     discriminatorKey: type
      *     discriminatorEnumValue: CountTriggerType.countTrigger
      *   },
      * ]
@@ -777,18 +777,19 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
             Map<String, Object> templateVars = new HashMap<>();
             templateVars.put("mappingName", oneOfMappedModel.getMappingName());
             templateVars.put("modelName", oneOfModel.getName());
+            templateVars.put("allVars", oneOfVars);
 
             // If we can find the discriminator value, then the user does not 
             // need to provide this enum when calling the helper method - it 
             // can be automatically inferred.
-            templateVars.put("oneOfVars", disEnumValue != null
+            templateVars.put("varsMaybeWithoutDiscriminator", disEnumValue != null
                 ? varsWithoutDiscriminator(oneOfVars, discriminator)
                 : oneOfVars
             );
 
             if (disEnumValue != null) {
                 // Name of discriminator property, e.g. "type"
-                templateVars.put("discriminatorEnumKey", discriminator.getPropertyName());
+                templateVars.put("discriminatorKey", discriminator.getPropertyName());
                 // Value of the discriminator, when it can be uniquely identified,
                 // for this type of oneOf.
                 templateVars.put("discriminatorEnumValue", disEnumValue);

@@ -12,13 +12,18 @@
 
 {{^vendorExtensions.x-is-pure}}
     {{#hasDiscriminatorWithNonEmptyMapping}}
-            {{#discriminator}}
-            {{#mappedModels}}
-                const factory {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}(
-                    {{modelName}} {{#lambda.camelcase}}{{modelName}}{{/lambda.camelcase}},
-                ) = {{classname}}{{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}};
-            {{/mappedModels}}
-            {{/discriminator}}
+            {{#vendorExtensions.x-oneOf-helper-properties}}
+                {{! 
+                Set unionKey, so we can use freezed deserialisation
+                https://pub.dev/packages/freezed#deserializing-generic-classes
+                }}
+                @Freezed(unionKey: r'{{discriminatorKey}}')
+                const factory {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}({
+                    {{#allVars}}
+                        @JsonKey(name: r'{{baseName}}') {{>serialization/freezed/variable_type}} {{name}},
+                    {{/allVars}}
+                }) = {{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}};
+            {{/vendorExtensions.x-oneOf-helper-properties}}
 
             {{! 
             Helper methods to make it easier to construct model oneOf classes.
@@ -27,30 +32,28 @@
             properties on the model classes directly.
             }}
             {{#vendorExtensions.x-oneOf-helper-properties}}
-                {{#oneOfVars}}
+                {{#varsMaybeWithoutDiscriminator}}
                     {{#description}}
                         /// [{{name}}] - {{{.}}}
                     {{/description}}
-                {{/oneOfVars}}
+                {{/varsMaybeWithoutDiscriminator}}
                 factory {{classname}}.from{{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}}({
-                    {{#oneOfVars}}
+                    {{#varsMaybeWithoutDiscriminator}}
                         {{>serialization/freezed/variable_type}} {{name}},
-                    {{/oneOfVars}}
+                    {{/varsMaybeWithoutDiscriminator}}
                 }) {
                     return {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}(
-                        {{modelName}}(
-                            {{! 
-                            If discriminatorEnumValue has been automatically inferred,
-                            the user doesn't need to provide it in the arguments and
-                            it will be added automatically here.
-                            }}
-                            {{#discriminatorEnumValue}}
-                                {{discriminatorEnumKey}}: {{discriminatorEnumValue}},
-                            {{/discriminatorEnumValue}}
-                            {{#oneOfVars}}
-                            {{name}}: {{name}},
-                            {{/oneOfVars}}
-                        )
+                        {{! 
+                        If discriminatorEnumValue has been automatically inferred,
+                        the user doesn't need to provide it in the arguments and
+                        it will be added automatically here.
+                        }}
+                        {{#discriminatorEnumValue}}
+                            {{discriminatorKey}}: {{discriminatorEnumValue}},
+                        {{/discriminatorEnumValue}}
+                        {{#varsMaybeWithoutDiscriminator}}
+                        {{name}}: {{name}},
+                        {{/varsMaybeWithoutDiscriminator}}
                     );
                 }
             {{/vendorExtensions.x-oneOf-helper-properties}}
