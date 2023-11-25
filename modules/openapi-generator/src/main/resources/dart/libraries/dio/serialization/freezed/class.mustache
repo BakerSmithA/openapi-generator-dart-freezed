@@ -9,7 +9,12 @@ part of 'models.dart';
     {{/allVars}}
 {{/hasVars}}
 
+{{#discriminator}}
+@Freezed(unionKey: r'{{propertyBaseName}}')
+{{/discriminator}}
+{{^discriminator}}
 @freezed
+{{/discriminator}}
 sealed class {{classname}} with _${{classname}} {
 const {{classname}}._();
 

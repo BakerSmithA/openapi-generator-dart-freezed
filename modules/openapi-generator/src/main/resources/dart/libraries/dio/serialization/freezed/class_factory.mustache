@@ -17,7 +17,6 @@
                 Set unionKey, so we can use freezed deserialisation
                 https://pub.dev/packages/freezed#deserializing-generic-classes
                 }}
-                @Freezed(unionKey: r'{{discriminatorKey}}')
                 const factory {{classname}}.typed{{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}}({
                     {{#allOneOfVars}}
                         {{#description}}
