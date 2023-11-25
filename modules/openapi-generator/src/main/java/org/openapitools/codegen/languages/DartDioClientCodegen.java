@@ -702,9 +702,7 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
      */
     private void addIsFreezedUnionMemberVendorExtension(Map<String, ModelsMap> objs) {
         Set<String> unionMemberNames = unionMemberModelsNames(objs);
-        System.out.println("ALL UNION MEMBERS: " + unionMemberNames);
         forEachModel(objs, model -> {
-            System.out.println("MODEL: " + model.getName() + ", UNION MEM: " + isModelUnionMember(model, unionMemberNames));
             model.vendorExtensions.put(
                 "x-is-freezed-union-member", 
                 isModelUnionMember(model, unionMemberNames)
@@ -847,7 +845,7 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
             Map<String, Object> templateVars = new HashMap<>();
             templateVars.put("mappingName", oneOfMappedModel.getMappingName());
             templateVars.put("modelName", oneOfModel.getName());
-            templateVars.put("allVars", oneOfVars);
+            templateVars.put("allOneOfVars", oneOfVars);
 
             // If we can find the discriminator value, then the user does not 
             // need to provide this enum when calling the helper method - it 

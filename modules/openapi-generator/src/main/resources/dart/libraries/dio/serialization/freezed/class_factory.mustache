@@ -18,10 +18,13 @@
                 https://pub.dev/packages/freezed#deserializing-generic-classes
                 }}
                 @Freezed(unionKey: r'{{discriminatorKey}}')
-                const factory {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}({
-                    {{#allVars}}
+                const factory {{classname}}.typed{{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}}({
+                    {{#allOneOfVars}}
+                        {{#description}}
+                            /// [{{name}}] - {{{.}}}
+                        {{/description}}
                         @JsonKey(name: r'{{baseName}}') {{>serialization/freezed/variable_type}} {{name}},
-                    {{/allVars}}
+                    {{/allOneOfVars}}
                 }) = {{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}};
             {{/vendorExtensions.x-oneOf-helper-properties}}
 
@@ -37,12 +40,12 @@
                         /// [{{name}}] - {{{.}}}
                     {{/description}}
                 {{/varsMaybeWithoutDiscriminator}}
-                factory {{classname}}.from{{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}}({
+                factory {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}({
                     {{#varsMaybeWithoutDiscriminator}}
                         {{>serialization/freezed/variable_type}} {{name}},
                     {{/varsMaybeWithoutDiscriminator}}
                 }) {
-                    return {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}(
+                    return {{classname}}.typed{{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}}(
                         {{! 
                         If discriminatorEnumValue has been automatically inferred,
                         the user doesn't need to provide it in the arguments and
