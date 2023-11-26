@@ -10,10 +10,23 @@ part of 'models.dart';
 {{/hasVars}}
 
 {{#discriminator}}
-@Freezed(unionKey: r'{{propertyBaseName}}')
+// Disable map and when as the docs suggest moving away from using them, 
+// and do use Dart's new switch statements: 
+// https://pub.dev/packages/freezed#legacy-union-types-and-sealed-classes
+@Freezed(
+  unionKey: r'{{propertyBaseName}}',
+  map: FreezedMapOptions(map: false, mapOrNull: false, maybeMap: false),
+  when: FreezedWhenOptions(when: false, whenOrNull: false, maybeWhen: false)
+)
 {{/discriminator}}
 {{^discriminator}}
-@freezed
+// Disable map and when as the docs suggest moving away from using them, 
+// and do use Dart's new switch statements: 
+// https://pub.dev/packages/freezed#legacy-union-types-and-sealed-classes
+@Freezed(
+  map: FreezedMapOptions(map: false, mapOrNull: false, maybeMap: false),
+  when: FreezedWhenOptions(when: false, whenOrNull: false, maybeWhen: false)
+)
 {{/discriminator}}
 sealed class {{classname}} with _${{classname}} {
 const {{classname}}._();
