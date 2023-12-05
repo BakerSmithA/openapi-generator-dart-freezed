@@ -850,10 +850,12 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
             // If we can find the discriminator value, then the user does not 
             // need to provide this enum when calling the helper method - it 
             // can be automatically inferred.
-            templateVars.put("varsMaybeWithoutDiscriminator", disEnumValue != null
+            var varsMaybeWithoutDiscriminator = disEnumValue != null
                 ? varsWithoutDiscriminator(oneOfVars, discriminator)
-                : oneOfVars
-            );
+                : oneOfVars;
+
+            templateVars.put("varsMaybeWithoutDiscriminator", varsMaybeWithoutDiscriminator);
+            templateVars.put("hasVarsWithoutDiscriminator", !varsMaybeWithoutDiscriminator.isEmpty());
 
             if (disEnumValue != null) {
                 // Name of discriminator property, e.g. "type"

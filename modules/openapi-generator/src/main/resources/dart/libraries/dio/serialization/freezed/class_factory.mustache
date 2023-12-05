@@ -40,11 +40,15 @@
                         /// [{{name}}] - {{{.}}}
                     {{/description}}
                 {{/varsMaybeWithoutDiscriminator}}
-                factory {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}({
+                factory {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}(
+                    {{#hasVarsWithoutDiscriminator}}
+                    {
                     {{#varsMaybeWithoutDiscriminator}}
                         {{>serialization/freezed/variable_type}} {{name}},
                     {{/varsMaybeWithoutDiscriminator}}
-                }) {
+                    }
+                    {{/hasVarsWithoutDiscriminator}}
+                ) {
                     return {{classname}}.typed{{#lambda.titlecase}}{{mappingName}}{{/lambda.titlecase}}(
                         {{! 
                         If discriminatorEnumValue has been automatically inferred,
