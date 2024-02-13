@@ -719,12 +719,20 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
             CodegenDiscriminator discriminator = model.getDiscriminator();
             if (discriminator != null) {
                 Set<MappedModel> mappedModels = discriminator.getMappedModels();
-                List<String> mappedModelNames = mappedModels.stream()
-                    .map(mappedModel -> mappedModel.getModelName())
-                    .toList();
-                names.addAll(mappedModelNames);
+                names.addAll(mappedModelNames(mappedModels));
             }
         });
+        return names;
+    }
+
+    /**
+     * @return model names for each model in `models`.
+     */
+    private List<String> mappedModelNames(Set<MappedModel> models) {
+        List<String> names = new ArrayList<>();
+        for (MappedModel model : models) {
+            names.add(model.getModelName());
+        }
         return names;
     }
 
@@ -871,7 +879,7 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
         // Add the filtered properties to a custom vendor extension
         model.vendorExtensions.put("x-oneOf-helper-properties", props);
     }
-
+    
     /**
      * If the discriminator has a single possible enum value, then returns 
      * a string representing the enum in Dart code (e.g. MyEnumType.type1). 
@@ -904,9 +912,13 @@ public class DartDioClientCodegen extends AbstractDartCodegen {
      * @return list of vars without discriminator property.
      */
     private List<CodegenProperty> varsWithoutDiscriminator(List<CodegenProperty> vars, CodegenDiscriminator discriminator) {
-        return vars.stream()
-            .filter(property -> property.getName() != discriminator.getPropertyName())
-            .toList();
+        List<CodegenProperty> result = new ArrayList<>();
+        for (CodegenProperty property : vars) {
+            if (!property.getName().equals(discriminator.getPropertyName())) {
+                result.add(property);
+            }
+        }
+        return result;
     }
 
     @Override
