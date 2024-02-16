@@ -9,3 +9,9 @@ targets:
         generate_for:
           include:
             - "lib/src/model/**.dart"
+
+      {{#useFreezed}}
+      json_serializable:
+        options:
+          explicit_to_json: true
+      {{/useFreezed}}
