@@ -1,0 +1,72 @@
+{{#vendorExtensions.x-is-pure}}
+factory {{classname}}.fromJson(Map<String, dynamic> json) => _${{classname}}FromJson(json);
+{{/vendorExtensions.x-is-pure}}
+{{^vendorExtensions.x-is-pure}}
+    {{#vendorExtensions.x-is-child}}
+        {{^hasDiscriminatorWithNonEmptyMapping}}
+            factory {{classname}}.fromJson(Map<String, dynamic> json) => _${{classname}}FromJson(json);
+        {{/hasDiscriminatorWithNonEmptyMapping}}
+    {{/vendorExtensions.x-is-child}}
+{{/vendorExtensions.x-is-pure}}
+
+{{^vendorExtensions.x-is-pure}}
+{{#hasDiscriminatorWithNonEmptyMapping}}
+    factory {{classname}}.fromJson(Map<String, dynamic> json) {
+        {{#discriminator}}
+            final dis = json['{{propertyBaseName}}'];
+            switch(dis) {
+                {{#mappedModels}}
+                    case '{{mappingName}}':
+                        return {{classname}}.{{#lambda.camelcase}}{{mappingName}}{{/lambda.camelcase}}(
+                            {{modelName}}.fromJson(json),
+                        );
+                {{/mappedModels}}
+            }
+        {{/discriminator}}
+        throw UnsupportedError("Couldn't deserialize oneOf for the discriminator value: ${dis}");
+    }
+{{/hasDiscriminatorWithNonEmptyMapping}}
+{{/vendorExtensions.x-is-pure}}
+
+{{^vendorExtensions.x-is-pure}}
+    {{^vendorExtensions.x-is-child}}
+        {{^hasDiscriminatorWithNonEmptyMapping}}
+            factory {{classname}}.fromJson(Map<String, dynamic> json) {
+                final fromJsonMethods = <FromJsonMethodType<dynamic>>[{{#anyOf}}{{#lambda.titlecase}}{{#PrimitiveFromJson}}{{{.}}}{{/PrimitiveFromJson}}{{/lambda.titlecase}}.fromJson,{{/anyOf}}{{#oneOf}}{{#lambda.titlecase}}{{#PrimitiveFromJson}}{{{.}}}{{/PrimitiveFromJson}}{{/lambda.titlecase}}.fromJson,{{/oneOf}}];
+                final deserializedModels = <{{classname}}>[];
+                {{classname}}? deserializedModel;
+                for (final fromJsonMethod in fromJsonMethods) {
+                    final dynamic parsedModel= fromJsonMethod.call(json);
+                    // Note following line won't be executed if already the above parsing fails.
+                    switch (deserializedModel.runtimeType) {
+                        {{#anyOf}}
+                            case {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}:
+                                deserializedModel =  {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}(
+                                    parsedModel as {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}},
+                                );
+                                break;
+                        {{/anyOf}}
+                        {{#oneOf}}
+                            case {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}:
+                                deserializedModel =  {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}(
+                                    parsedModel as {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}},
+                                );
+                                break;
+                        {{/oneOf}}
+                        default:
+                            throw UnsupportedError("Couldn't deserialize JSON: ${json}");
+                    }
+                    deserializedModels.add(deserializedModel);
+                }
+                // Throw an errpr when the incoming json parses into more than one models.
+                if(deserializedModels.length > 1){
+                    throw UnsupportedError("More than more one satisfied when parsing JSON: ${json}. Models: ${deserializedModels}");
+                }
+                if (deserializedModel == null) {
+                    throw Exception("No models matched when parsing JSON: ${json}");
+                }
+                return deserializedModel;
+            }
+        {{/hasDiscriminatorWithNonEmptyMapping}}
+    {{/vendorExtensions.x-is-child}}
+{{/vendorExtensions.x-is-pure}}
