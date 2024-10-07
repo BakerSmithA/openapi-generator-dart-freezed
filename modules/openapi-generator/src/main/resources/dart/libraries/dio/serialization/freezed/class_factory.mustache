@@ -25,7 +25,7 @@
     {{^vendorExtensions.x-is-child}}
         {{^hasDiscriminatorWithNonEmptyMapping}}
                 {{#anyOf}}
-                    const factory {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}({
+                    const factory {{classname}}.as{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}}(
                         {{#lambda.titlecase}}{{#PrimitiveInUnion}}{{{.}}}{{/PrimitiveInUnion}}{{/lambda.titlecase}} {{#lambda.camelcase}}{{{.}}}Value{{/lambda.camelcase}}
                     ) = {{classname}}As{{#lambda.titlecase}}{{#PrimitiveInUnion}}{{#lambda.camelcase}}{{{.}}}{{/lambda.camelcase}}{{/PrimitiveInUnion}}{{/lambda.titlecase}};
                 {{/anyOf}}
